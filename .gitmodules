@@ -1,0 +1,3 @@
+[submodule "MTPy"]
+	path = MTPy
+	url = https://github.com/Cian-H/MTPy
