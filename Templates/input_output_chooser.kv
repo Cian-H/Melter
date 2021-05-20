@@ -1,0 +1,63 @@
+# input_output_chooser.kv
+#:kivy 2.0
+
+# Widget:
+<InputOutputChooser>:
+    BoxLayout:
+        orientation: "vertical"
+        # First item is the input file directory chooser in stacked layout
+        StackLayout:
+            orientation: "lr-tb"
+            size_hint_y: None
+            size_hint_x: 1.
+            height: 30
+            spacing: 5
+
+            BoxLayout:
+                size_hint_x: 1.
+                # Containing a description of what the field points to
+                Label:
+                    halign: "right"
+                    text: "Layer data directory:"
+                    size_hint_x: None
+                    width: 160
+                # A textbox for filepath entry
+                TextInput:
+                    id: in_path
+                    readonly: True
+                    hint_text: "Read pyrometry data from..."
+                # A button that opens the file chooser popup
+                Button:
+                    text: "Choose Folder"
+                    size_hint_x: None
+                    width: 120
+                    on_press: root.open_chooser("in_path")
+
+        # Second item is the output file directory chooser in stacked layout
+        StackLayout:
+            orientation: "lr-tb"
+            size_hint_y: None
+            size_hint_x: 1.
+            height: 30
+            spacing: 5
+
+            BoxLayout:
+                size_hint_x: 1.
+                # Containing a description of what the field points to
+                Label:
+                    halign: "right"
+                    text: "Output directory:"
+                    size_hint_x: None
+                    width: 160
+                # A textbox for filepath entry
+                TextInput:
+                    id: out_path
+                    readonly: True
+                    hint_text: "Output figures to..."
+                # A button that opens the file chooser popup
+                Button:
+                    text: "Choose Folder"
+                    size_hint_x: None
+                    width: 120
+                    on_press:
+                        root.open_chooser("out_path")

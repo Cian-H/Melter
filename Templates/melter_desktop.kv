@@ -1,0 +1,735 @@
+# melter_desktop.kv
+#:kivy 2.0
+#:include Templates/input_output_chooser.kv
+#:import InputOutputChooser Templates.input_output_chooser.InputOutputChooser
+#:import DropdownButton Templates.dropdown_button.DropdownButton
+#:import ConsoleOutput Templates.console_output.ConsoleOutput
+
+
+<Main>:
+    name: "main_screen"
+    id: main_screen
+    TabbedPanel:
+        id: test
+        title: "Melter"
+        do_default_tab: False
+        # First tab is for loading data
+        TabbedPanelItem:
+            id: loading_tab
+            text: "Data Loading"
+            # UI made up of floating sub-layouts
+            FloatLayout:
+
+                # First item is an InputOutputChooser
+                InputOutputChooser:
+                    id: io_chooser_dataloading
+                    size_hint_x: 1.0
+                    pos_hint: {"x": 0., "y": 0.875}
+
+                # Second item is a grid layout filled with buttons
+                # These buttons denote available functions for loading data
+                GridLayout:
+                    orientation: "tb-lr"
+                    size_hint_x: 0.9
+                    size_hint_y: 0.8
+                    pos_hint: {"x": 0.05, "y": 0.05}
+                    cols: 1
+                    # This is the button and progress bar for loading data
+                    StackLayout:
+                        size_hint_y: 0.15
+                        orientation: "lr-tb"
+                        Button:
+                            size_hint_x: 0.25
+                            text: "Load Pyrometry Data"
+                            on_press: root.load_data()
+                        ProgressBar:
+                            id: read_layers_progbar
+                            size_hint_x: 0.75
+                            value: 0
+                        # A button that applies the calibration curve
+                        Button:
+                            text: "Apply Calibration Curve"
+                            size_hint_x: 0.25
+                            width: 120
+                            on_press: root.apply_calibration_curve()
+                        StackLayout:
+                            size_hint_x: 0.25
+                            size_hint_y: 0.5
+                            cols: 1
+                            rows: 2
+                            # Containing a description of what the field points to
+                            Label:
+                                halign: "right"
+                                text: "Calibration Curve"
+                                width: 160
+                            # A textbox for cal curve equation entry
+                            TextInput:
+                                halign: "center"
+                                valign: "center"
+                                id: calibration_curve
+                                readonly: False
+                                hint_text: "y = x"
+                        ProgressBar:
+                            id: cal_curve_progbar
+                            size_hint_x: 0.5
+                            value: 0
+                    # This label displays current status of data processing
+                    Label:
+                        id: dataloading_display
+                        text: "No data loaded!"
+                        halign: "center"
+                        valign: "center"
+
+        # Second tab is for detecting & separating samples
+        TabbedPanelItem:
+            id: detection_tab
+            text: "Sample\nDetection"
+
+            # Items are stacked from bottom to top. UI made of floating sub-layouts
+            FloatLayout:
+
+                # First item is an InputOutputChooser
+                InputOutputChooser:
+                    id: io_chooser_sampledetection
+                    size_hint_x: 1.0
+                    pos_hint: {"x": 0., "y": 0.875}
+
+                # Second item is a grid layout filled with buttons
+                # These buttons denote available functions for per sample data
+                GridLayout:
+                    size_hint_x: 0.9
+                    size_hint_y: 0.75
+                    pos_hint: {"x": 0.05, "y": 0.05}
+                    cols: 1
+                    # Below is a tabbed panel for different thresholding methods
+                    TabbedPanel:
+                        size_hint_x: 1.0
+                        size_hint_y: 0.25
+                        do_default_tab: False
+                        tab_pos: "left_top"
+                        tab_width: self.height
+                        # This is a messy solution, but uses a nested TabbedPanel
+                        # to label the threshold functions. Would prefer better
+                        # method. Maybe some kind of tooltip?
+                        TabbedPanelItem:
+                            text: "Thresholding\nTechniques"
+                            TabbedPanel:
+                                size_hint_x: 1.0
+                                size_hint_y: 1.0
+                                do_default_tab: False
+                                tab_pos: "left_top"
+                                tab_width: self.height / 2
+                                # First tab is options for speed based thresholding
+                                TabbedPanelItem:
+                                    text: "Speed"
+                                    id: avgspeed_thresh_panel
+                                    # Create a panel to hold items
+                                    StackLayout:
+                                        size_hint_x: 1.0
+                                        size_hint_y: 1.0
+                                        orientation: "lr-tb"
+                                        # Top panel contains buttons
+                                        #:set avgspeed_toprowheight 30.
+                                        # This label is a spacer
+                                        Label:
+                                            size_hint_x: 1.0
+                                            size_hint_y: None
+                                            height: ((self.parent.height / 2) - avgspeed_toprowheight) / 2
+                                        # Here is the main options, held in center by spacers
+                                        Label:
+                                            text: "Thresholding percent:"
+                                            size_hint_x: 0.25
+                                            size_hint_y: None
+                                            height: avgspeed_toprowheight
+                                            text_size: self.size
+                                            halign: "right"
+                                            valign: "middle"
+                                        TextInput:
+                                            id: avgspeed_thresh_thresh_percent
+                                            hint_text: "x < (% of max speed)"
+                                            size_hint_y: None
+                                            height: avgspeed_toprowheight
+                                            size_hint_x: 0.25
+                                        Label:
+                                            text: "Rolling average:"
+                                            size_hint_x: 0.25
+                                            size_hint_y: None
+                                            height: avgspeed_toprowheight
+                                            text_size: self.size
+                                            halign: "right"
+                                            valign: "middle"
+                                        TextInput:
+                                            id: avgspeed_thresh_avgof
+                                            hint_text: "n"
+                                            size_hint_y: None
+                                            height: avgspeed_toprowheight
+                                            size_hint_x: 0.25
+                                        # This label is a spacer
+                                        Label:
+                                            size_hint_x: 1.0
+                                            size_hint_y: None
+                                            height: ((self.parent.height / 2) - avgspeed_toprowheight) / 2
+                                        # This button and progress bar trigger and track the
+                                        # thresholding of data
+                                        Button:
+                                            text: "Threshold by rolling\naverage of speed"
+                                            size_hint_x: 0.25
+                                            size_hint_y: 0.5
+                                            on_press: root.avgspeed_threshold()
+                                        ProgressBar:
+                                            id: avgspeed_threshold_progbar
+                                            size_hint_x: 0.75
+                                            size_hint_y: 0.5
+                                            value: 0
+
+                                # Second tab is for tepmerature based thresholding
+                                TabbedPanelItem:
+                                    text: "Temp"
+                                    id: avgtemp_thresh_panel
+                                    StackLayout:
+                                        size_hint_x: 1.0
+                                        size_hint_y: 1.0
+                                        orientation: "lr-tb"
+                                        # Top panel contains buttons
+                                        #:set avgtemp_toprowheight 30.
+                                        # This label is a spacer
+                                        Label:
+                                            size_hint_x: 1.0
+                                            size_hint_y: None
+                                            height: ((self.parent.height / 2) - avgtemp_toprowheight) / 2
+                                        # Here is the main options, held in center by spacers
+                                        Label:
+                                            text: "Keep points where: Temperature "
+                                            size_hint_x: 0.5
+                                            size_hint_y: None
+                                            height: avgtemp_toprowheight
+                                            text_size: self.size
+                                            halign: "right"
+                                            valign: "middle"
+                                        DropdownButton:
+                                            id: avgtemp_thresh_function_dropdown
+                                            text: ">"
+                                            size_hint_x: 0.1
+                                            size_hint_y: None
+                                            height: avgtemp_toprowheight
+                                        TextInput:
+                                            id: avgtemp_thresh_thresh_percent
+                                            hint_text: "x"
+                                            size_hint_y: None
+                                            height: avgtemp_toprowheight
+                                            size_hint_x: 0.1
+                                        Label:
+                                            text: "% of maximum"
+                                            size_hint_x: 0.3
+                                            size_hint_y: None
+                                            height: avgtemp_toprowheight
+                                            text_size: self.size
+                                            halign: "left"
+                                            valign: "middle"
+                                        # This label is a spacer
+                                        Label:
+                                            size_hint_x: 1.0
+                                            size_hint_y: None
+                                            height: ((self.parent.height / 2) - avgtemp_toprowheight) / 2
+                                        # This button and progress bar trigger and track the
+                                        # thresholding of data
+                                        Button:
+                                            text: "Threshold by\naverage temperature"
+                                            size_hint_x: 0.25
+                                            size_hint_y: 0.5
+                                            on_press: root.avgtemp_threshold()
+                                        ProgressBar:
+                                            id: avgtemp_threshold_progbar
+                                            size_hint_x: 0.75
+                                            size_hint_y: 0.5
+                                            value: 0
+                    # The next piece contains controls for KMeans sample separation
+                    StackLayout:
+                        #:set kmeans_toprowheight 30.
+                        id: kmeans_panel
+                        size_hint_x: 1.0
+                        size_hint_y: 0.25
+                        # This label is a spacer
+                        Label:
+                            size_hint_x: 1.0
+                            size_hint_y: None
+                            height: ((self.parent.height / 2) - kmeans_toprowheight) / 2
+                        Label:
+                            text: "Number of Samples: "
+                            size_hint_x: 0.25
+                            size_hint_y: None
+                            height: kmeans_toprowheight
+                            text_size: self.size
+                            halign: "right"
+                            valign: "middle"
+                        TextInput:
+                            id: kmeans_nsamples
+                            hint_text: "n"
+                            size_hint_x: 0.25
+                            size_hint_y: None
+                            height: kmeans_toprowheight
+                        # This label is a spacer
+                        Label:
+                            size_hint_x: 1.0
+                            size_hint_y: None
+                            height: ((self.parent.height / 2) - kmeans_toprowheight) / 2
+                        # This button and progress bar trigger and track the
+                        # generation of figures
+                        Button:
+                            text: "Separate Samples"
+                            size_hint_x: 0.25
+                            size_hint_y: 0.5
+                            on_press: root.separate_samples()
+                        ProgressBar:
+                            id: kmeans_separate_samples_progbar
+                            size_hint_x: 0.75
+                            size_hint_y: 0.5
+                            value: 0
+
+                    # The box below will display console output from kmeans
+                    ScrollView:
+                        size_hint_x: 1.0
+                        size_hint_y: 0.5
+                        ConsoleOutput:
+                            id: kmeans_separate_console_output
+                            size_hint_x: 1.0
+
+        # Third tab is for generating whole buildplate figures
+        TabbedPanelItem:
+            id: plate_vis_tab
+            text: "Buildplate\nVisualization"
+
+            # Items are stacked from bottom to top. UI made of floating sub-layouts
+            FloatLayout:
+
+                # First item is an InputOutputChooser
+                InputOutputChooser:
+                    id: io_chooser_buildplate
+                    size_hint_x: 1.0
+                    pos_hint: {"x": 0., "y": 0.875}
+
+                # Second item is a grid layout filled with buttons
+                # These buttons denote available functions for buildplate plotting
+                StackLayout:
+                    size_hint_x: 0.9
+                    size_hint_y: 0.8
+                    pos_hint: {"x": 0.05, "y": 0.05}
+                    orientation: "lr-tb"
+                    #:set row_y_hint 0.15
+                    #:set num_functions 3
+                    #:set spacer_y_hint ((1-(row_y_hint*num_functions*2))/(num_functions-1))
+
+                    # First function on this panel (layers_to_figures) begins here
+                    # This button will be a dropdown
+                    DropdownButton:
+                        id: layers_to_figures_filetype_dropdown
+                        text: "select file type\n(png)"
+                        size_hint_x: 0.25
+                        size_hint_y: row_y_hint
+                    # Right of the dropdown will be a suite of options
+                    StackLayout:
+                        orientation: "tb-lr"
+                        size_hint_x: 0.75
+                        size_hint_y: row_y_hint
+                        # Checkboxes for toggling plot colouring and colourbars
+                        CheckBox:
+                            id: layers_to_figures_plot_w
+                            active: True
+                            size_hint_x: 0.1
+                            size_hint_y: 0.5
+                        CheckBox:
+                            id: layers_to_figures_colorbar
+                            active: True
+                            size_hint_x: 0.1
+                            size_hint_y: 0.5
+                        Label:
+                            text: "Colour by temperature"
+                            size_hint_x: 0.4
+                            size_hint_y: 0.5
+                            text_size: self.size
+                            halign: "left"
+                            valign: "middle"
+                        Label:
+                            text: "Display colourbar"
+                            size_hint_x: 0.4
+                            size_hint_y: 0.5
+                            text_size: self.size
+                            halign: "left"
+                            valign: "middle"
+                        # And text input for other figure parameters
+                        TextInput:
+                            id: layers_to_figures_figureparams
+                            size_hint_x: 0.5
+                            size_hint_y: 0.5
+                            hint_text: "Figure parameters..."
+                        TextInput:
+                            id: layers_to_figures_plotparams
+                            size_hint_x: 0.5
+                            size_hint_y: 0.5
+                            hint_text: "Plot parameters..."
+                    # This button an progress bar trigger and track the
+                    # generation of figures
+                    Button:
+                        text: "Generate static 2d\nbuidplate figures"
+                        size_hint_x: 0.25
+                        size_hint_y: row_y_hint
+                        on_press: root.layers_to_figures()
+                    ProgressBar:
+                        id: layers_to_figures_progbar
+                        size_hint_x: 0.75
+                        size_hint_y: row_y_hint
+                        value: 0
+
+                    # This spacer clearly separates panels for functions
+                    Label:
+                        size_hint_x: 1.0
+                        size_hint_y: spacer_y_hint
+
+                    # Second function on this panel (layers_to_3dplot) begins here
+                    # This button will be a dropdown
+                    DropdownButton:
+                        id: layers_to_3dplot_filetype_dropdown
+                        text: "select file type\n(png)"
+                        size_hint_x: 0.25
+                        size_hint_y: row_y_hint
+                    # Right of the dropdown will be a suite of options
+                    StackLayout:
+                        orientation: "tb-lr"
+                        size_hint_x: 0.75
+                        size_hint_y: row_y_hint
+                        # Checboxes for toggling plot colouring and colourbars
+                        CheckBox:
+                            id: layers_to_3dplot_plot_w
+                            active: True
+                            size_hint_x: 0.1
+                            size_hint_y: 0.5
+                        CheckBox:
+                            id: layers_to_3dplot_colorbar
+                            active: True
+                            size_hint_x: 0.1
+                            size_hint_y: 0.5
+                        Label:
+                            text: "Colour by temperature"
+                            size_hint_x: 0.4
+                            size_hint_y: 0.5
+                            text_size: self.size
+                            halign: "left"
+                            valign: "middle"
+                        Label:
+                            text: "Display colourbar"
+                            size_hint_x: 0.4
+                            size_hint_y: 0.5
+                            text_size: self.size
+                            halign: "left"
+                            valign: "middle"
+                        # And text input for other figure parameters
+                        TextInput:
+                            id: layers_to_3dplot_figureparams
+                            size_hint_x: 0.5
+                            size_hint_y: 0.5
+                            hint_text: "Figure parameters..."
+                        TextInput:
+                            id: layers_to_3dplot_plotparams
+                            size_hint_x: 0.5
+                            size_hint_y: 0.5
+                            hint_text: "Plot parameters..."
+                    # This button an progress bar trigger and track the
+                    # generation of figures
+                    Button:
+                        text: "Generate static 3d\nbuidplate figures"
+                        size_hint_x: 0.25
+                        size_hint_y: row_y_hint
+                        on_press: root.layers_to_3dplot()
+                    ProgressBar:
+                        id: layers_to_3dplot_progbar
+                        size_hint_x: 0.75
+                        size_hint_y: row_y_hint
+                        value: 0
+
+                    # This spacer clearly separates panels for functions
+                    Label:
+                        size_hint_x: 1.0
+                        size_hint_y: spacer_y_hint
+
+                    # Second function on this panel (layers_to_3dplot) begins here
+                    # First part of this panel will be a suite of options
+                    StackLayout:
+                        orientation: "lr-tb"
+                        size_hint_x: 1.00
+                        size_hint_y: row_y_hint
+                        # Checkboxes for toggling plot colouring and colourbars
+                        # and downsampling factor input
+                        #:set one_third 1/3
+                        Label:
+                            text: "Downsampling: "
+                            size_hint_x: 0.75 * one_third
+                            size_hint_y: 0.5
+                            text_size: self.size
+                            halign: "right"
+                            valign: "middle"
+                        TextInput:
+                            id: layers_to_3dplot_interactive_downsampling
+                            hint_text: "1"
+                            size_hint_x: 0.25 * one_third
+                            size_hint_y: 0.5
+                        CheckBox:
+                            id: layers_to_3dplot_interactive_plot_w
+                            active: True
+                            size_hint_x: 0.25 * one_third
+                            size_hint_y: 0.5
+                        Label:
+                            text: "Colour by temperature"
+                            size_hint_x: 0.75 * one_third
+                            size_hint_y: 0.5
+                            text_size: self.size
+                            halign: "left"
+                            valign: "middle"
+                        CheckBox:
+                            id: layers_to_3dplot_interactive_sliceable
+                            active: True
+                            size_hint_x: 0.25 * one_third
+                            size_hint_y: 0.5
+                        Label:
+                            text: "Sliceable model"
+                            size_hint_x: 0.75 * one_third
+                            size_hint_y: 0.5
+                            text_size: self.size
+                            halign: "left"
+                            valign: "middle"
+                        TextInput:
+                            id: layers_to_3dplot_interactive_plotparams
+                            size_hint_x: 1.
+                            size_hint_y: 0.5
+                            hint_text: "Plot parameters..."
+                    # This button an progress bar trigger and track the
+                    # generation of figures
+                    Button:
+                        text: "Generate interactive 3d\nbuidplate figures"
+                        size_hint_x: 0.25
+                        size_hint_y: row_y_hint
+                        on_press: root.layers_to_3dplot_interactive()
+                    ProgressBar:
+                        id: layers_to_3dplot_interactive_progbar
+                        size_hint_x: 0.75
+                        size_hint_y: row_y_hint
+                        value: 0
+
+        # Fourth tab is for generating figures
+        TabbedPanelItem:
+            id: sample_vis_tab
+            text: "Per Sample\nVisualization"
+
+            # Items are stacked from bottom to top. UI made of floating sub-layouts
+            FloatLayout:
+
+                # First item is an InputOutputChooser
+                InputOutputChooser:
+                    id: io_chooser_persample
+                    size_hint_x: 1.0
+                    pos_hint: {"x": 0., "y": 0.875}
+
+                # Second item is a grid layout filled with buttons
+                # These buttons denote available functions for buildplate plotting
+                StackLayout:
+                    size_hint_x: 0.9
+                    size_hint_y: 0.8
+                    pos_hint: {"x": 0.05, "y": 0.05}
+                    orientation: "lr-tb"
+                    #:set row_y_hint 0.15
+                    #:set num_functions 3
+                    #:set spacer_y_hint ((1-(row_y_hint*num_functions*2))/(num_functions-1))
+
+                    # First function on this panel (layers_to_figures) begins here
+                    # This button will be a dropdown
+                    DropdownButton:
+                        id: samples_to_figures_filetype_dropdown
+                        text: "select file type\n(png)"
+                        size_hint_x: 0.25
+                        size_hint_y: row_y_hint
+                    # Right of the dropdown will be a suite of options
+                    StackLayout:
+                        orientation: "tb-lr"
+                        size_hint_x: 0.75
+                        size_hint_y: row_y_hint
+                        # Checkboxes for toggling plot colouring and colourbars
+                        CheckBox:
+                            id: samples_to_figures_plot_w
+                            active: True
+                            size_hint_x: 0.1
+                            size_hint_y: 0.5
+                        CheckBox:
+                            id: samples_to_figures_colorbar
+                            active: True
+                            size_hint_x: 0.1
+                            size_hint_y: 0.5
+                        Label:
+                            text: "Colour by temperature"
+                            size_hint_x: 0.4
+                            size_hint_y: 0.5
+                            text_size: self.size
+                            halign: "left"
+                            valign: "middle"
+                        Label:
+                            text: "Display colourbar"
+                            size_hint_x: 0.4
+                            size_hint_y: 0.5
+                            text_size: self.size
+                            halign: "left"
+                            valign: "middle"
+                        # And text input for other figure parameters
+                        TextInput:
+                            id: samples_to_figures_figureparams
+                            size_hint_x: 0.5
+                            size_hint_y: 0.5
+                            hint_text: "Figure parameters..."
+                        TextInput:
+                            id: samples_to_figures_plotparams
+                            size_hint_x: 0.5
+                            size_hint_y: 0.5
+                            hint_text: "Plot parameters..."
+                    # This button an progress bar trigger and track the
+                    # generation of figures
+                    Button:
+                        text: "Generate static 2d\nsample figures"
+                        size_hint_x: 0.25
+                        size_hint_y: row_y_hint
+                        on_press: root.samples_to_figures()
+                    ProgressBar:
+                        id: samples_to_figures_progbar
+                        size_hint_x: 0.75
+                        size_hint_y: row_y_hint
+                        value: 0
+
+                    # This spacer clearly separates panels for functions
+                    Label:
+                        size_hint_x: 1.0
+                        size_hint_y: spacer_y_hint
+
+                    # Second function on this panel (layers_to_3dplot) begins here
+                    # This button will be a dropdown
+                    DropdownButton:
+                        id: samples_to_3dplot_filetype_dropdown
+                        text: "select file type\n(png)"
+                        size_hint_x: 0.25
+                        size_hint_y: row_y_hint
+                    # Right of the dropdown will be a suite of options
+                    StackLayout:
+                        orientation: "tb-lr"
+                        size_hint_x: 0.75
+                        size_hint_y: row_y_hint
+                        # Checboxes for toggling plot colouring and colourbars
+                        CheckBox:
+                            id: samples_to_3dplot_plot_w
+                            active: True
+                            size_hint_x: 0.1
+                            size_hint_y: 0.5
+                        CheckBox:
+                            id: samples_to_3dplot_colorbar
+                            active: True
+                            size_hint_x: 0.1
+                            size_hint_y: 0.5
+                        Label:
+                            text: "Colour by temperature"
+                            size_hint_x: 0.4
+                            size_hint_y: 0.5
+                            text_size: self.size
+                            halign: "left"
+                            valign: "middle"
+                        Label:
+                            text: "Display colourbar"
+                            size_hint_x: 0.4
+                            size_hint_y: 0.5
+                            text_size: self.size
+                            halign: "left"
+                            valign: "middle"
+                        # And text input for other figure parameters
+                        TextInput:
+                            id: samples_to_3dplot_figureparams
+                            size_hint_x: 0.5
+                            size_hint_y: 0.5
+                            hint_text: "Figure parameters..."
+                        TextInput:
+                            id: samples_to_3dplot_plotparams
+                            size_hint_x: 0.5
+                            size_hint_y: 0.5
+                            hint_text: "Plot parameters..."
+                    # This button an progress bar trigger and track the
+                    # generation of figures
+                    Button:
+                        text: "Generate static 3d\nsample figures"
+                        size_hint_x: 0.25
+                        size_hint_y: row_y_hint
+                        on_press: root.samples_to_3dplot()
+                    ProgressBar:
+                        id: samples_to_3dplot_progbar
+                        size_hint_x: 0.75
+                        size_hint_y: row_y_hint
+                        value: 0
+
+                    # This spacer clearly separates panels for functions
+                    Label:
+                        size_hint_x: 1.0
+                        size_hint_y: spacer_y_hint
+
+                    # Second function on this panel (layers_to_3dplot) begins here
+                    # First part of this panel will be a suite of options
+                    StackLayout:
+                        orientation: "lr-tb"
+                        size_hint_x: 1.00
+                        size_hint_y: row_y_hint
+                        # Checkboxes for toggling plot colouring and colourbars
+                        # and downsampling factor input
+                        #:set one_third 1/3
+                        Label:
+                            text: "Downsampling: "
+                            size_hint_x: 0.75 * one_third
+                            size_hint_y: 0.5
+                            text_size: self.size
+                            halign: "right"
+                            valign: "middle"
+                        TextInput:
+                            id: samples_to_3dplot_interactive_downsampling
+                            hint_text: "1"
+                            size_hint_x: 0.25 * one_third
+                            size_hint_y: 0.5
+                        CheckBox:
+                            id: samples_to_3dplot_interactive_plot_w
+                            active: True
+                            size_hint_x: 0.25 * one_third
+                            size_hint_y: 0.5
+                        Label:
+                            text: "Colour by temperature"
+                            size_hint_x: 0.75 * one_third
+                            size_hint_y: 0.5
+                            text_size: self.size
+                            halign: "left"
+                            valign: "middle"
+                        CheckBox:
+                            id: samples_to_3dplot_interactive_sliceable
+                            active: True
+                            size_hint_x: 0.25 * one_third
+                            size_hint_y: 0.5
+                        Label:
+                            text: "Sliceable model"
+                            size_hint_x: 0.75 * one_third
+                            size_hint_y: 0.5
+                            text_size: self.size
+                            halign: "left"
+                            valign: "middle"
+                        TextInput:
+                            id: samples_to_3dplot_interactive_plotparams
+                            size_hint_x: 1.
+                            size_hint_y: 0.5
+                            hint_text: "Plot parameters..."
+                    # This button an progress bar trigger and track the
+                    # generation of figures
+                    Button:
+                        text: "Generate interactive 3d\nsample figures"
+                        size_hint_x: 0.25
+                        size_hint_y: row_y_hint
+                        on_press: root.samples_to_3dplot_interactive()
+                    ProgressBar:
+                        id: samples_to_3dplot_interactive_progbar
+                        size_hint_x: 0.75
+                        size_hint_y: row_y_hint
+                        value: 0
