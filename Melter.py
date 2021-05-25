@@ -19,13 +19,20 @@ class Melter(App):
         return Main()
 
 
-dev_mode = False
+def main():
+    Melter().run()
 
 
-if (__name__ == "__main__") and dev_mode:
-    # DEBUG
+def main_debug():
     test = Melter()
     test.run()
     breakpoint()
-elif __name__ == "__main__":
-    Melter().run()
+
+
+if __name__ == "__main__":
+    dev_mode = False
+
+    if not dev_mode:
+        main()
+    else:
+        main_debug()
