@@ -6,8 +6,8 @@ from kivy.lang.builder import Builder
 from kivy.properties import ObjectProperty
 from kivy.uix.screenmanager import Screen
 # Other python module imports
-from common.MTPy_Modified import MT_Modded as MeltpoolTomography
-from common.threading_decorators import run_in_thread
+from Common.MTPy_Modified import MT_Modded as MeltpoolTomography
+from Common.threading_decorators import run_in_thread
 from types import SimpleNamespace
 import operator as op
 from ast import literal_eval
