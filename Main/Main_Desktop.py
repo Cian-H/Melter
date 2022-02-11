@@ -8,6 +8,7 @@ from kivy.uix.screenmanager import Screen
 # Other python module imports
 from Common.MTPy_Modified import MT_Modded as MeltpoolTomography
 from Common.threading_decorators import run_in_thread
+from pathlib import Path
 from types import SimpleNamespace
 import operator as op
 from ast import literal_eval
@@ -45,10 +46,11 @@ class Main(Screen):
         self.mtpy.progress_bars["separate_samples"] = self.ids.kmeans_separate_samples_progbar  # noqa
         # self.mtpy.progress_bars["threshold_all_layers"] = self.ids.avgspeed_threshold_progbar  # noqa
         # self.mtpy.progress_bars["threshold_all_layers"] = self.ids.avgtemp_threshold_progbar  # noqa
+        self.mtpy.progress_bars["temp_data_to_csv"] = self.ids.kmeans_separate_samples_progbar  # noqa
         # Starting items in cache
         starting_cache = {"shared_io_choosers": shared_io_choosers,
-                          "in_path": "~",  # path to input data
-                          "out_path": "~",  # path to output data
+                          "in_path": str(Path("~").expanduser()),  # path to input data
+                          "out_path": str(Path("~").expanduser()),  # path to output data
                           "last_loaded_path": False,  # path to last loaded
                           "calibration_curve": False,  # last cal curve used
                           "static_fileformats":  # Allowed static formats
@@ -376,3 +378,8 @@ class Main(Screen):
         self.mtpy.separate_samples()
         # Finally, update the status string
         self.update_data_status()
+
+    # This function generates datasheets
+    @run_in_thread
+    def temp_data_to_csv(self):
+        self.mtpy.temp_data_to_csv(f"{self.cache.out_path}")

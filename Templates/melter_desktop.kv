@@ -501,7 +501,7 @@
                             size_hint_x: 1.
                             size_hint_y: 0.5
                             hint_text: "Plot parameters..."
-                    # This button an progress bar trigger and track the
+                    # This button is a progress bar trigger that tracks the
                     # generation of figures
                     Button:
                         text: "Generate interactive 3d\nbuidplate figures"
@@ -721,7 +721,7 @@
                             size_hint_x: 1.
                             size_hint_y: 0.5
                             hint_text: "Plot parameters..."
-                    # This button an progress bar trigger and track the
+                    # This button is a progress bar trigger that tracks the
                     # generation of figures
                     Button:
                         text: "Generate interactive 3d\nsample figures"
@@ -732,4 +732,37 @@
                         id: samples_to_3dplot_interactive_progbar
                         size_hint_x: 0.75
                         size_hint_y: row_y_hint
+                        value: 0
+
+        # Fifth tab is for generating datasheets
+        TabbedPanelItem:
+            id: datasheet_tab
+            text: "Datasheet\nGeneration"
+
+            # Items are stacked from bottom to top. UI made of floating sub-layouts
+            FloatLayout:
+
+                # First item is an InputOutputChooser
+                InputOutputChooser:
+                    id: io_chooser_persample
+                    size_hint_x: 1.0
+                    pos_hint: {"x": 0., "y": 0.875}
+
+                # Button, below, is in a simple grid layout
+                GridLayout:
+                    size_hint_x: 0.9
+                    size_hint_y: 0.15
+                    pos_hint: {"x": 0.05, "y": 0.6}
+                    rows: 1
+                    # This button is a progress bar trigger that tracks the
+                    # generation of datasheets
+                    Button:
+                        text: "Generate\nDatasheets"
+                        size_hint_x: 0.25
+                        size_hint_y: 1
+                        on_press: root.temp_data_to_csv()
+                    ProgressBar:
+                        id: temp_data_to_csv_progbar
+                        size_hint_x: 0.75
+                        size_hint_y: 1
                         value: 0

@@ -8,8 +8,8 @@ from kivy.app import App
 mode = "desktop"
 if mode == "desktop":
     from Main.Main_Desktop import Main
-elif mode == "phone":
-    from Main.Main_Phone import Main
+# elif mode == "phone":
+#     from Main.Main_Phone import Main
 
 
 # Create application class
