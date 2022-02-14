@@ -11,11 +11,11 @@ if mode == "desktop":
 # elif mode == "phone":
 #     from Main.Main_Phone import Main
 
-
 # Create application class
 class Melter(App):
 
     def build(self):
+        self.icon = "Icons/app-icon.svg"
         return Main()
 
 
