@@ -8,9 +8,9 @@ from kivy.uix.screenmanager import Screen
 # Other python module imports
 from Common.MTPy_Modified import MT_Modded as MeltpoolTomography
 from Common.threading_decorators import run_in_thread
+from Data import Calibration, ThresholdFunctions
 from pathlib import Path
-from types import SimpleNamespace
-import operator as op
+from types import SimpleNamespace, FunctionType
 from ast import literal_eval
 from contextlib import redirect_stdout
 
@@ -32,7 +32,8 @@ class Main(Screen):
         shared_io_choosers = ["io_chooser_dataloading",
                               "io_chooser_buildplate",
                               "io_chooser_sampledetection",
-                              "io_chooser_persample"]
+                              "io_chooser_persample",
+                              "io_chooser_datasheet"]
         shared_io_choosers = [self.ids[x] for x in shared_io_choosers]
         # Link progress bars in document to their associated functions
         self.mtpy.progress_bars["read_layers"] = self.ids.read_layers_progbar
@@ -48,24 +49,21 @@ class Main(Screen):
         # self.mtpy.progress_bars["threshold_all_layers"] = self.ids.avgtemp_threshold_progbar  # noqa
         self.mtpy.progress_bars["temp_data_to_csv"] = self.ids.kmeans_separate_samples_progbar  # noqa
         # Starting items in cache
-        starting_cache = {"shared_io_choosers": shared_io_choosers,
-                          "in_path": str(Path("~").expanduser()),  # path to input data
-                          "out_path": str(Path("~").expanduser()),  # path to output data
-                          "last_loaded_path": False,  # path to last loaded
-                          "calibration_curve": False,  # last cal curve used
-                          "static_fileformats":  # Allowed static formats
-                          ("png", "pdf", "ps", "eps", "svg"),
-                          "thresh_functions":  # Threshold functions available
-                          {
-                                ">": op.gt,
-                                "≥": op.ge,
-                                "=": op.eq,
-                                "≠": op.ne,
-                                "≤": op.le,
-                                "<": op.lt,
-                          },
-                          "progress_bars": self.mtpy.progress_bars}
-
+        starting_cache = {
+            # Shared variables
+            "shared_io_choosers": shared_io_choosers,
+            "in_path": str(Path("~").expanduser()),  # path to input data
+            "out_path": str(Path("~").expanduser()),  # path to output data
+            "last_loaded_path": False,  # path to last loaded
+            "calibration_curve": False,  # last cal curve used
+            # Dropdown population lists
+            "printer_types": ("None", "3D Systems", "Aconity", "GE Additive", "Renishaw", "Stratasys"),
+            "calibration_curves": [v() for k, v in Calibration.__dict__.items() if "__" not in k],
+            "static_fileformats": ("png", "pdf", "ps", "eps", "svg"),  # Allowed static formats
+            "thresh_functions": [v() for k, v in ThresholdFunctions.__dict__.items() if "__" not in k],
+            # Progress Bars
+            "progress_bars": self.mtpy.progress_bars
+        }
         self.cache = SimpleNamespace(**starting_cache)
         # Make sure each shared io chooser is aware of others and parent app
         for chooser in self.cache.shared_io_choosers:
@@ -73,11 +71,21 @@ class Main(Screen):
                 [x for x in self.cache.shared_io_choosers if x != chooser]
             chooser.cache.parent_app = self
         # Next, populate dropdowns
-        # First, the dropdowns for matplotlib filetype options
-        self.ids.layers_to_figures_filetype_dropdown.populate_dropdown(
-            self.cache.static_fileformats)
-        self.ids.avgtemp_thresh_function_dropdown.populate_dropdown(
-            self.cache.thresh_functions.keys())
+        # The dropdown for selecting the printer type
+        self.ids.printer_type_dropdown.populate_dropdown(self.cache.printer_types)
+        # The dropdown for calibration curves
+        self.ids.calibration_curve_dropdown.populate_dropdown(self.cache.calibration_curves)
+        # The dropdowns for matplotlib filetype options
+        static_filetype_dropdowns = (
+            self.ids.layers_to_figures_filetype_dropdown,
+            self.ids.layers_to_3dplot_filetype_dropdown,
+            self.ids.samples_to_figures_filetype_dropdown,
+            self.ids.samples_to_3dplot_filetype_dropdown,
+        )
+        for dropdown in static_filetype_dropdowns:
+            dropdown.populate_dropdown(self.cache.static_fileformats)
+        # The dropdowns for the thresholding functions
+        self.ids.avgtemp_thresh_function_dropdown.populate_dropdown(self.cache.thresh_functions)
 
     # Property returns a string summarising the status of data processing
     @property
@@ -149,9 +157,9 @@ class Main(Screen):
             elif c in ("(", "{", "["):
                 neststring += c
             elif c in (")", "}", "]"):
-                if (c == ")" and neststring[-1] == "(" or
-                        c == "}" and neststring[-1] == "{" or
-                        c == "]" and neststring[-1] == "["):
+                if (c == ")" and neststring[-1] == "("
+                        or c == "}" and neststring[-1] == "{"
+                        or c == "]" and neststring[-1] == "["):
                     neststring = neststring[:-1]
         parsed.append(paramstring[prev_split:])
 
@@ -163,6 +171,18 @@ class Main(Screen):
         parsed = {kw: literal_eval(val) for kw, val in parsed}
 
         return parsed
+
+    # Parses layer selection into a layer filter
+    def parse_filter(self, filterstring: str) -> FunctionType:
+        filterstring = filterstring.strip()
+        if filterstring.isdigit():
+            return lambda x: x == int(filterstring)
+        elif ":" in filterstring:
+            return lambda x: x in range(*(int(y) for y in filterstring.split(":")))
+        elif "," in filterstring:
+            return lambda x: x in (int(y) for y in filterstring.split(","))
+        else:
+            return lambda x: True
 
     # This function loads input data only if not already loaded
     @run_in_thread
@@ -177,16 +197,23 @@ class Main(Screen):
     # NOTE: relies on eval! Function may be dangerous
     @run_in_thread
     def apply_calibration_curve(self):
-        equation = self.ids.calibration_curve.text
-        equation = equation.replace(" ", "")
-        if ((equation != self.cache.calibration_curve) and
-                (equation != "y=x") and
-                (equation[:2] == "y=")):
-            def func(x):
-                return eval(equation[2:])
-            self.mtpy.apply_calibration_curve(func)
-            self.cache.calibration_curve = equation
-            self.update_data_status()
+        cal_curve_selection = self.ids.calibration_curve_dropdown.current_selection
+        if (cal_curve_selection.name == "Custom"):
+            equation = self.ids.calibration_curve.text
+            equation = equation.replace(" ", "")
+            if ((equation != self.cache.calibration_curve)
+                    and (equation != "y=x")
+                    and (equation[:2] == "y=")):
+                def func(x):
+                    return eval(equation[2:])
+                self.mtpy.apply_calibration_curve(func)
+                self.cache.calibration_curve = equation
+                self.update_data_status()
+        else:
+            if cal_curve_selection is not self.cache.calibration_curve:
+                self.mtpy.apply_calibration_curve(cal_curve_selection)
+                self.cache.calibration_curve = cal_curve_selection
+                self.update_data_status()
 
     # A wrapper function translating application state into a call to the
     # mtpy function layers_to_figures
@@ -200,10 +227,8 @@ class Main(Screen):
         plot_w = self.ids.layers_to_figures_plot_w.active
         colorbar = self.ids.layers_to_figures_colorbar.active
         # then parse kwarg params
-        figureparams = self.parse_kwargs(
-                           self.ids.layers_to_figures_figureparams.text)
-        scatterparams = self.parse_kwargs(
-                            self.ids.layers_to_figures_plotparams.text)
+        figureparams = self.parse_kwargs(self.ids.layers_to_figures_figureparams.text)
+        scatterparams = self.parse_kwargs(self.ids.layers_to_figures_plotparams.text)
         self.mtpy.layers_to_figures(self.cache.out_path,
                                     filetype=filetype,
                                     plot_w=plot_w,
@@ -224,9 +249,9 @@ class Main(Screen):
         colorbar = self.ids.layers_to_3dplot_colorbar.active
         # then parse kwarg params
         figureparams = self.parse_kwargs(
-                           self.ids.layers_to_3dplot_figureparams.text)
+            self.ids.layers_to_3dplot_figureparams.text)
         plotparams = self.parse_kwargs(
-                            self.ids.layers_to_3dplot_plotparams.text)
+            self.ids.layers_to_3dplot_plotparams.text)
         self.mtpy.layers_to_3dplot(self.cache.out_path,
                                    filetype=filetype,
                                    plot_w=plot_w,
@@ -267,9 +292,9 @@ class Main(Screen):
         colorbar = self.ids.samples_to_figures_colorbar.active
         # then parse kwarg params
         figureparams = self.parse_kwargs(
-                           self.ids.samples_to_figures_figureparams.text)
+            self.ids.samples_to_figures_figureparams.text)
         scatterparams = self.parse_kwargs(
-                            self.ids.samples_to_figures_plotparams.text)
+            self.ids.samples_to_figures_plotparams.text)
         self.mtpy.samples_to_figures(self.cache.out_path,
                                      filetype=filetype,
                                      plot_w=plot_w,
@@ -290,9 +315,9 @@ class Main(Screen):
         colorbar = self.ids.samples_to_3dplot_colorbar.active
         # then parse kwarg params
         figureparams = self.parse_kwargs(
-                           self.ids.samples_to_3dplot_figureparams.text)
+            self.ids.samples_to_3dplot_figureparams.text)
         plotparams = self.parse_kwargs(
-                            self.ids.samples_to_3dplot_plotparams.text)
+            self.ids.samples_to_3dplot_plotparams.text)
         self.mtpy.samples_to_3dplot(self.cache.out_path,
                                     filetype=filetype,
                                     plot_w=plot_w,
@@ -382,4 +407,13 @@ class Main(Screen):
     # This function generates datasheets
     @run_in_thread
     def temp_data_to_csv(self):
-        self.mtpy.temp_data_to_csv(f"{self.cache.out_path}")
+        confidence_interval = self.ids.temp_data_to_csv_confinterval
+        confidence_interval = confidence_interval.strip()
+        if confidence_interval.isdigit():
+            confidence_interval = float(confidence_interval)
+        else:
+            confidence_interval = 0.95
+        self.mtpy.temp_data_to_csv(f"{self.cache.out_path}",
+                                   layers=self.ids.temp_data_to_csv_layers,
+                                   samples=self.ids.temp_data_to_csv_samples,
+                                   confidence_interval=confidence_interval)

@@ -7,30 +7,41 @@ from kivy.uix.dropdown import DropDown
 
 
 class DropdownButton(Button):
-    def __init__(self, option_list=None, **kwargs):
-        # ensure "text" kwarg isnt present
+
+    def __init__(self,
+                 option_list=None,
+                 default_selection=None,
+                 bound_textfields={},
+                 **kwargs):
+        # ensure "test" kwarg isnt present
         if "test" in kwargs:
             kwargs.pop("test")
 
         # Add default args if they're not specifically assigned
         self.defaultkwargs = \
-            {"background_color": [x*0.75 for x in self.background_color],
+            {"background_color": [x * 0.75 for x in self.background_color],
              }
 
         for keyword, arg in self.defaultkwargs.items():
             if keyword not in kwargs:
                 kwargs[keyword] = arg
 
+        # self.bound_textfields is a dict of objects as keys,
+        # values are either the name of textfield to update or tuple containing
+        # the textfield name AND a function that maps the selection to a new string
+        self.bound_textfields = bound_textfields
         self.kwargs = kwargs
         super(DropdownButton, self).__init__(**self.kwargs)
-
-        # Create lambdas for callbacks
-        self.__bind_button = lambda btn: self.dropdown_list.select(btn.text)
-        self.__update_label = lambda instance, x: setattr(self, "text", x)
 
         if option_list is not None:
             self.populate_dropdown(option_list)
 
+        if type(default_selection) == str:
+            self.current_selection = self.objects_dict[default_selection]
+        else:
+            self.current_selection = default_selection
+
+    # Populates dropdown with contents of list given
     def populate_dropdown(self, option_list):
         kwargs = self.kwargs.copy()
         kwargs["size_hint_y"] = None
@@ -42,11 +53,32 @@ class DropdownButton(Button):
         self.dropdown_list = None
         self.dropdown_list = DropDown()
 
-        for x in option_list:
+        self.objects_dict = {str(x): x for x in option_list}
+
+        for x in self.objects_dict.keys():
             button = Button(text=x, **kwargs)
-            # button = Button(text=x, size_hint_y=None, height=50)
-            button.bind(on_release=self.__bind_button)
+            button.bind(on_release=self._bind_button)
             self.dropdown_list.add_widget(button)
 
         self.bind(on_release=self.dropdown_list.open)
-        self.dropdown_list.bind(on_select=self.__update_label)
+        self.dropdown_list.bind(on_select=self._select_item)
+
+    # Function to bind button to dropdown
+    def _bind_button(self, btn):
+        self.dropdown_list.select(btn.text)
+
+    def _update_label(self, instance, x):
+        setattr(self, "text", x)
+
+    # This function runs whenever an item from the dropdown is selected
+    def _select_item(self, instance, selection):
+        self.current_selection = self.objects_dict[selection]
+        self._update_label(instance, selection)
+        self.update_bound_textfields(selection)
+
+    def update_bound_textfields(self, text):
+        for object, field in self.bound_textfields.items():
+            if type(field) == str:
+                setattr(object, field, text)
+            elif type(field) == tuple:
+                setattr(object, field[0], field[1](text))

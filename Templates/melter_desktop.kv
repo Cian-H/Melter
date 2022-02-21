@@ -42,33 +42,40 @@
                             size_hint_x: 0.25
                             text: "Load Pyrometry Data"
                             on_press: root.load_data()
+                        # A dropdown for selecting printer type
+                        # TODO: make this actually do something
+                        DropdownButton:
+                            text: "None"
+                            size_hint_x: 0.25
+                            id: printer_type_dropdown
                         ProgressBar:
                             id: read_layers_progbar
-                            size_hint_x: 0.75
+                            size_hint_x: 0.5
                             value: 0
                         # A button that applies the calibration curve
                         Button:
                             text: "Apply Calibration Curve"
                             size_hint_x: 0.25
-                            width: 120
+                            width: 60
                             on_press: root.apply_calibration_curve()
                         StackLayout:
                             size_hint_x: 0.25
                             size_hint_y: 0.5
                             cols: 1
                             rows: 2
-                            # Containing a description of what the field points to
-                            Label:
-                                halign: "right"
-                                text: "Calibration Curve"
-                                width: 160
+                            # A dropdown for selecting preprogrammed/custom calibrations
+                            DropdownButton:
+                                text: "None"
+                                id: calibration_curve_dropdown
+                                width: 80
+                                bound_textfields: {calibration_curve: ("hint_text", lambda _: getattr(self.current_selection, "formula"))}
                             # A textbox for cal curve equation entry
                             TextInput:
                                 halign: "center"
                                 valign: "center"
                                 id: calibration_curve
                                 readonly: False
-                                hint_text: "y = x"
+                                hint_text: "y=x"
                         ProgressBar:
                             id: cal_curve_progbar
                             size_hint_x: 0.5
@@ -319,43 +326,58 @@
                     #:set num_functions 3
                     #:set spacer_y_hint ((1-(row_y_hint*num_functions*2))/(num_functions-1))
 
-                    # First function on this panel (layers_to_figures) begins here
-                    # This button will be a dropdown
-                    DropdownButton:
-                        id: layers_to_figures_filetype_dropdown
-                        text: "select file type\n(png)"
-                        size_hint_x: 0.25
-                        size_hint_y: row_y_hint
-                    # Right of the dropdown will be a suite of options
+                    # Panel of options for static 2d figures
                     StackLayout:
                         orientation: "tb-lr"
-                        size_hint_x: 0.75
+                        size_hint_x: 1.
                         size_hint_y: row_y_hint
-                        # Checkboxes for toggling plot colouring and colourbars
-                        CheckBox:
-                            id: layers_to_figures_plot_w
-                            active: True
-                            size_hint_x: 0.1
+                        # First function on this panel (layers_to_figures) begins here
+                        # This button will be a dropdown
+                        DropdownButton:
+                            id: layers_to_figures_filetype_dropdown
+                            text: "select file type (png)"
+                            size_hint_x: 0.25
                             size_hint_y: 0.5
-                        CheckBox:
-                            id: layers_to_figures_colorbar
-                            active: True
-                            size_hint_x: 0.1
+                        GridLayout:
+                            rows: 1
+                            size_hint_x: 0.25
                             size_hint_y: 0.5
-                        Label:
-                            text: "Colour by temperature"
-                            size_hint_x: 0.4
+                            # Checkboxes for toggling plot colouring and colourbars
+                            CheckBox:
+                                id: layers_to_figures_plot_w
+                                active: True
+                                size_hint_x: 0.1
+                                size_hint_y: 0.5
+                            Label:
+                                text: "Heatmap"
+                                size_hint_x: 0.4
+                                size_hint_y: 0.5
+                                text_size: self.size
+                                halign: "left"
+                                valign: "middle"
+                            CheckBox:
+                                id: layers_to_figures_colorbar
+                                active: True
+                                size_hint_x: 0.1
+                                size_hint_y: 0.5
+                            Label:
+                                text: "Colourbar"
+                                size_hint_x: 0.4
+                                size_hint_y: 0.5
+                                text_size: self.size
+                                halign: "left"
+                                valign: "middle"
+                        # Text input for layer/sample filters
+                        TextInput:
+                            id: layers_to_figures_layerfilter
+                            size_hint_x: 0.25
                             size_hint_y: 0.5
-                            text_size: self.size
-                            halign: "left"
-                            valign: "middle"
-                        Label:
-                            text: "Display colourbar"
-                            size_hint_x: 0.4
+                            hint_text: "Layer filter..."
+                        TextInput:
+                            id: layers_to_figures_samplefilter
+                            size_hint_x: 0.25
                             size_hint_y: 0.5
-                            text_size: self.size
-                            halign: "left"
-                            valign: "middle"
+                            hint_text: "Sample filter..."
                         # And text input for other figure parameters
                         TextInput:
                             id: layers_to_figures_figureparams
@@ -386,42 +408,56 @@
                         size_hint_y: spacer_y_hint
 
                     # Second function on this panel (layers_to_3dplot) begins here
-                    # This button will be a dropdown
-                    DropdownButton:
-                        id: layers_to_3dplot_filetype_dropdown
-                        text: "select file type\n(png)"
-                        size_hint_x: 0.25
-                        size_hint_y: row_y_hint
-                    # Right of the dropdown will be a suite of options
                     StackLayout:
                         orientation: "tb-lr"
-                        size_hint_x: 0.75
+                        size_hint_x: 1.
                         size_hint_y: row_y_hint
-                        # Checboxes for toggling plot colouring and colourbars
-                        CheckBox:
-                            id: layers_to_3dplot_plot_w
-                            active: True
-                            size_hint_x: 0.1
+                        # This button will be a dropdown
+                        DropdownButton:
+                            id: layers_to_3dplot_filetype_dropdown
+                            text: "select file type (png)"
+                            size_hint_x: 0.25
                             size_hint_y: 0.5
-                        CheckBox:
-                            id: layers_to_3dplot_colorbar
-                            active: True
-                            size_hint_x: 0.1
+                        # Checkboxes for toggling plot colouring and colourbars
+                        GridLayout:
+                            rows: 1
+                            size_hint_x: 0.25
                             size_hint_y: 0.5
-                        Label:
-                            text: "Colour by temperature"
-                            size_hint_x: 0.4
+                            CheckBox:
+                                id: layers_to_3dplot_plot_w
+                                active: True
+                                size_hint_x: 0.1
+                                size_hint_y: 0.5
+                            Label:
+                                text: "Heatmap"
+                                size_hint_x: 0.4
+                                size_hint_y: 0.5
+                                text_size: self.size
+                                halign: "left"
+                                valign: "middle"
+                            CheckBox:
+                                id: layers_to_3dplot_colorbar
+                                active: True
+                                size_hint_x: 0.1
+                                size_hint_y: 0.5
+                            Label:
+                                text: "Colourbar"
+                                size_hint_x: 0.4
+                                size_hint_y: 0.5
+                                text_size: self.size
+                                halign: "left"
+                                valign: "middle"
+                        # Text input for layer/sample filters
+                        TextInput:
+                            id: layers_to_3dplot_layerfilter
+                            size_hint_x: 0.25
                             size_hint_y: 0.5
-                            text_size: self.size
-                            halign: "left"
-                            valign: "middle"
-                        Label:
-                            text: "Display colourbar"
-                            size_hint_x: 0.4
+                            hint_text: "Layer filter..."
+                        TextInput:
+                            id: layers_to_3dplot_samplefilter
+                            size_hint_x: 0.25
                             size_hint_y: 0.5
-                            text_size: self.size
-                            halign: "left"
-                            valign: "middle"
+                            hint_text: "Sample filter..."
                         # And text input for other figure parameters
                         TextInput:
                             id: layers_to_3dplot_figureparams
@@ -451,7 +487,7 @@
                         size_hint_x: 1.0
                         size_hint_y: spacer_y_hint
 
-                    # Second function on this panel (layers_to_3dplot) begins here
+                    # Third function on this panel (layers_to_3dplot_interactive) begins here
                     # First part of this panel will be a suite of options
                     StackLayout:
                         orientation: "lr-tb"
@@ -459,10 +495,9 @@
                         size_hint_y: row_y_hint
                         # Checkboxes for toggling plot colouring and colourbars
                         # and downsampling factor input
-                        #:set one_third 1/3
                         Label:
-                            text: "Downsampling: "
-                            size_hint_x: 0.75 * one_third
+                            text: "Downsampling:"
+                            size_hint_x: 0.167
                             size_hint_y: 0.5
                             text_size: self.size
                             halign: "right"
@@ -470,16 +505,26 @@
                         TextInput:
                             id: layers_to_3dplot_interactive_downsampling
                             hint_text: "1"
-                            size_hint_x: 0.25 * one_third
+                            size_hint_x: 0.083
                             size_hint_y: 0.5
+                        TextInput:
+                            id: layers_to_3dplot_interactive_layerfilter
+                            size_hint_x: 0.375
+                            size_hint_y: 0.5
+                            hint_text: "Layer Filter..."
+                        TextInput:
+                            id: layers_to_3dplot_interactive_samplefilter
+                            size_hint_x: 0.375
+                            size_hint_y: 0.5
+                            hint_text: "Sample Filter..."
                         CheckBox:
                             id: layers_to_3dplot_interactive_plot_w
                             active: True
-                            size_hint_x: 0.25 * one_third
+                            size_hint_x: 0.025
                             size_hint_y: 0.5
                         Label:
-                            text: "Colour by temperature"
-                            size_hint_x: 0.75 * one_third
+                            text: "Heatmap"
+                            size_hint_x: 0.1
                             size_hint_y: 0.5
                             text_size: self.size
                             halign: "left"
@@ -487,18 +532,18 @@
                         CheckBox:
                             id: layers_to_3dplot_interactive_sliceable
                             active: True
-                            size_hint_x: 0.25 * one_third
+                            size_hint_x: 0.025
                             size_hint_y: 0.5
                         Label:
-                            text: "Sliceable model"
-                            size_hint_x: 0.75 * one_third
+                            text: "Sliceable"
+                            size_hint_x: 0.1
                             size_hint_y: 0.5
                             text_size: self.size
                             halign: "left"
                             valign: "middle"
                         TextInput:
                             id: layers_to_3dplot_interactive_plotparams
-                            size_hint_x: 1.
+                            size_hint_x: 0.75
                             size_hint_y: 0.5
                             hint_text: "Plot parameters..."
                     # This button is a progress bar trigger that tracks the
@@ -539,43 +584,58 @@
                     #:set num_functions 3
                     #:set spacer_y_hint ((1-(row_y_hint*num_functions*2))/(num_functions-1))
 
-                    # First function on this panel (layers_to_figures) begins here
-                    # This button will be a dropdown
-                    DropdownButton:
-                        id: samples_to_figures_filetype_dropdown
-                        text: "select file type\n(png)"
-                        size_hint_x: 0.25
-                        size_hint_y: row_y_hint
-                    # Right of the dropdown will be a suite of options
+                    # Panel of options for static 2d figures
                     StackLayout:
                         orientation: "tb-lr"
-                        size_hint_x: 0.75
+                        size_hint_x: 1.
                         size_hint_y: row_y_hint
-                        # Checkboxes for toggling plot colouring and colourbars
-                        CheckBox:
-                            id: samples_to_figures_plot_w
-                            active: True
-                            size_hint_x: 0.1
+                        # First function on this panel (layers_to_figures) begins here
+                        # This button will be a dropdown
+                        DropdownButton:
+                            id: samples_to_figures_filetype_dropdown
+                            text: "select file type (png)"
+                            size_hint_x: 0.25
                             size_hint_y: 0.5
-                        CheckBox:
-                            id: samples_to_figures_colorbar
-                            active: True
-                            size_hint_x: 0.1
+                        GridLayout:
+                            rows: 1
+                            size_hint_x: 0.25
                             size_hint_y: 0.5
-                        Label:
-                            text: "Colour by temperature"
-                            size_hint_x: 0.4
+                            # Checkboxes for toggling plot colouring and colourbars
+                            CheckBox:
+                                id: samples_to_figures_plot_w
+                                active: True
+                                size_hint_x: 0.1
+                                size_hint_y: 0.5
+                            Label:
+                                text: "Heatmap"
+                                size_hint_x: 0.4
+                                size_hint_y: 0.5
+                                text_size: self.size
+                                halign: "left"
+                                valign: "middle"
+                            CheckBox:
+                                id: samples_to_figures_colorbar
+                                active: True
+                                size_hint_x: 0.1
+                                size_hint_y: 0.5
+                            Label:
+                                text: "Colourbar"
+                                size_hint_x: 0.4
+                                size_hint_y: 0.5
+                                text_size: self.size
+                                halign: "left"
+                                valign: "middle"
+                        # Text input for layer/sample filters
+                        TextInput:
+                            id: samples_to_figures_layerfilter
+                            size_hint_x: 0.25
                             size_hint_y: 0.5
-                            text_size: self.size
-                            halign: "left"
-                            valign: "middle"
-                        Label:
-                            text: "Display colourbar"
-                            size_hint_x: 0.4
+                            hint_text: "Layer filter..."
+                        TextInput:
+                            id: samples_to_figures_samplefilter
+                            size_hint_x: 0.25
                             size_hint_y: 0.5
-                            text_size: self.size
-                            halign: "left"
-                            valign: "middle"
+                            hint_text: "Sample filter..."
                         # And text input for other figure parameters
                         TextInput:
                             id: samples_to_figures_figureparams
@@ -606,42 +666,56 @@
                         size_hint_y: spacer_y_hint
 
                     # Second function on this panel (layers_to_3dplot) begins here
-                    # This button will be a dropdown
-                    DropdownButton:
-                        id: samples_to_3dplot_filetype_dropdown
-                        text: "select file type\n(png)"
-                        size_hint_x: 0.25
-                        size_hint_y: row_y_hint
-                    # Right of the dropdown will be a suite of options
                     StackLayout:
                         orientation: "tb-lr"
-                        size_hint_x: 0.75
+                        size_hint_x: 1.
                         size_hint_y: row_y_hint
-                        # Checboxes for toggling plot colouring and colourbars
-                        CheckBox:
-                            id: samples_to_3dplot_plot_w
-                            active: True
-                            size_hint_x: 0.1
+                        # This button will be a dropdown
+                        DropdownButton:
+                            id: samples_to_3dplot_filetype_dropdown
+                            text: "select file type (png)"
+                            size_hint_x: 0.25
                             size_hint_y: 0.5
-                        CheckBox:
-                            id: samples_to_3dplot_colorbar
-                            active: True
-                            size_hint_x: 0.1
+                        GridLayout:
+                            rows: 1
+                            size_hint_x: 0.25
                             size_hint_y: 0.5
-                        Label:
-                            text: "Colour by temperature"
-                            size_hint_x: 0.4
+                            # Checkboxes for toggling plot colouring and colourbars
+                            CheckBox:
+                                id: samples_to_3dplot_plot_w
+                                active: True
+                                size_hint_x: 0.1
+                                size_hint_y: 0.5
+                            Label:
+                                text: "Heatmap"
+                                size_hint_x: 0.4
+                                size_hint_y: 0.5
+                                text_size: self.size
+                                halign: "left"
+                                valign: "middle"
+                            CheckBox:
+                                id: samples_to_3dplot_colorbar
+                                active: True
+                                size_hint_x: 0.1
+                                size_hint_y: 0.5
+                            Label:
+                                text: "Colourbar"
+                                size_hint_x: 0.4
+                                size_hint_y: 0.5
+                                text_size: self.size
+                                halign: "left"
+                                valign: "middle"
+                        # Text input for layer/sample filters
+                        TextInput:
+                            id: samples_to_3dplot_layerfilter
+                            size_hint_x: 0.25
                             size_hint_y: 0.5
-                            text_size: self.size
-                            halign: "left"
-                            valign: "middle"
-                        Label:
-                            text: "Display colourbar"
-                            size_hint_x: 0.4
+                            hint_text: "Layer filter..."
+                        TextInput:
+                            id: samples_to_3dplot_samplefilter
+                            size_hint_x: 0.25
                             size_hint_y: 0.5
-                            text_size: self.size
-                            halign: "left"
-                            valign: "middle"
+                            hint_text: "Sample filter..."
                         # And text input for other figure parameters
                         TextInput:
                             id: samples_to_3dplot_figureparams
@@ -671,7 +745,7 @@
                         size_hint_x: 1.0
                         size_hint_y: spacer_y_hint
 
-                    # Second function on this panel (layers_to_3dplot) begins here
+                    # Third function on this panel (layers_to_3dplot_interactive) begins here
                     # First part of this panel will be a suite of options
                     StackLayout:
                         orientation: "lr-tb"
@@ -679,10 +753,9 @@
                         size_hint_y: row_y_hint
                         # Checkboxes for toggling plot colouring and colourbars
                         # and downsampling factor input
-                        #:set one_third 1/3
                         Label:
-                            text: "Downsampling: "
-                            size_hint_x: 0.75 * one_third
+                            text: "Downsampling:"
+                            size_hint_x: 0.167
                             size_hint_y: 0.5
                             text_size: self.size
                             halign: "right"
@@ -690,16 +763,26 @@
                         TextInput:
                             id: samples_to_3dplot_interactive_downsampling
                             hint_text: "1"
-                            size_hint_x: 0.25 * one_third
+                            size_hint_x: 0.083
                             size_hint_y: 0.5
+                        TextInput:
+                            id: samples_to_3dplot_interactive_layerfilter
+                            size_hint_x: 0.375
+                            size_hint_y: 0.5
+                            hint_text: "Layer Filter..."
+                        TextInput:
+                            id: samples_to_3dplot_interactive_samplefilter
+                            size_hint_x: 0.375
+                            size_hint_y: 0.5
+                            hint_text: "Sample Filter..."
                         CheckBox:
                             id: samples_to_3dplot_interactive_plot_w
                             active: True
-                            size_hint_x: 0.25 * one_third
+                            size_hint_x: 0.025
                             size_hint_y: 0.5
                         Label:
-                            text: "Colour by temperature"
-                            size_hint_x: 0.75 * one_third
+                            text: "Heatmap"
+                            size_hint_x: 0.1
                             size_hint_y: 0.5
                             text_size: self.size
                             halign: "left"
@@ -707,18 +790,18 @@
                         CheckBox:
                             id: samples_to_3dplot_interactive_sliceable
                             active: True
-                            size_hint_x: 0.25 * one_third
+                            size_hint_x: 0.025
                             size_hint_y: 0.5
                         Label:
-                            text: "Sliceable model"
-                            size_hint_x: 0.75 * one_third
+                            text: "Sliceable"
+                            size_hint_x: 0.1
                             size_hint_y: 0.5
                             text_size: self.size
                             halign: "left"
                             valign: "middle"
                         TextInput:
                             id: samples_to_3dplot_interactive_plotparams
-                            size_hint_x: 1.
+                            size_hint_x: 0.75
                             size_hint_y: 0.5
                             hint_text: "Plot parameters..."
                     # This button is a progress bar trigger that tracks the
@@ -744,25 +827,75 @@
 
                 # First item is an InputOutputChooser
                 InputOutputChooser:
-                    id: io_chooser_persample
+                    id: io_chooser_datasheet
                     size_hint_x: 1.0
                     pos_hint: {"x": 0., "y": 0.875}
 
                 # Button, below, is in a simple grid layout
-                GridLayout:
+                StackLayout:
+                    orientation: "lr-tb"
                     size_hint_x: 0.9
-                    size_hint_y: 0.15
-                    pos_hint: {"x": 0.05, "y": 0.6}
-                    rows: 1
+                    size_hint_y: 0.1875
+                    pos_hint: {"x": 0.05, "y": 0.5}
+                    # rows: 2
+                    # Checkboxes to turn on/off layer-by-layer and sample-by-sample stats
+                    CheckBox:
+                        id: temp_data_to_csv_layers
+                        active: True
+                        size_hint_x: 0.025
+                        size_hint_y: 0.33
+                    Label:
+                        text: "Layers"
+                        size_hint_x: 0.1
+                        size_hint_y: 0.33
+                        text_size: self.size
+                        halign: "left"
+                        valign: "middle"
+                    CheckBox:
+                        id: temp_data_to_csv_samples
+                        active: True
+                        size_hint_x: 0.025
+                        size_hint_y: 0.33
+                    Label:
+                        text: "Samples"
+                        size_hint_x: 0.1
+                        size_hint_y: 0.33
+                        text_size: self.size
+                        halign: "left"
+                        valign: "middle"
+                    # Text input for setting confidence interval
+                    Label:
+                        text: "Confidence Interval"
+                        size_hint_x: 0.125
+                        size_hint_y: 0.33
+                        text_size: self.size
+                        halign: "right"
+                        valign: "middle"
+                    TextInput:
+                        id: temp_data_to_csv_confinterval
+                        size_hint_x: 0.075
+                        size_hint_y: 0.33
+                        hint_text: "0.95"
+                    # Text input for layer/sample filters
+                    TextInput:
+                        id: temp_data_to_csv_layerfilter
+                        size_hint_x: 0.25
+                        size_hint_y: 0.33
+                        hint_text: "Layer filter..."
+                    TextInput:
+                        id: temp_data_to_csv_samplefilter
+                        size_hint_x: 0.25
+                        size_hint_y: 0.33
+                        hint_text: "Sample filter..."
                     # This button is a progress bar trigger that tracks the
                     # generation of datasheets
                     Button:
                         text: "Generate\nDatasheets"
                         size_hint_x: 0.25
-                        size_hint_y: 1
+                        size_hint_y: 0.67
                         on_press: root.temp_data_to_csv()
                     ProgressBar:
                         id: temp_data_to_csv_progbar
                         size_hint_x: 0.75
-                        size_hint_y: 1
+                        size_hint_y: 0.67
                         value: 0
