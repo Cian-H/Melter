@@ -42,12 +42,12 @@ class Main(Screen):
         self.mtpy.progress_bars["_layers_to_3dplot"] = self.ids.layers_to_3dplot_progbar  # noqa
         self.mtpy.progress_bars["_layers_to_3dplot_interactive"] = self.ids.layers_to_3dplot_interactive_progbar  # noqa
         self.mtpy.progress_bars["samples_to_figures"] = self.ids.samples_to_figures_progbar  # noqa
-        self.mtpy.progress_bars["samples_to_3dplot"] = self.ids.samples_to_3dplot_progbar  # noqa
-        self.mtpy.progress_bars["samples_to_3dplot_interactive"] = self.ids.samples_to_3dplot_interactive_progbar  # noqa
+        self.mtpy.progress_bars["samples_to_3dplots"] = self.ids.samples_to_3dplots_progbar  # noqa
+        self.mtpy.progress_bars["samples_to_3dplots_interactive"] = self.ids.samples_to_3dplots_interactive_progbar  # noqa
         self.mtpy.progress_bars["separate_samples"] = self.ids.kmeans_separate_samples_progbar  # noqa
         # self.mtpy.progress_bars["threshold_all_layers"] = self.ids.avgspeed_threshold_progbar  # noqa
         # self.mtpy.progress_bars["threshold_all_layers"] = self.ids.avgtemp_threshold_progbar  # noqa
-        self.mtpy.progress_bars["temp_data_to_csv"] = self.ids.kmeans_separate_samples_progbar  # noqa
+        self.mtpy.progress_bars["temp_data_to_csv"] = self.ids.temp_data_to_csv_progbar  # noqa
         # Starting items in cache
         starting_cache = {
             # Shared variables
@@ -58,9 +58,9 @@ class Main(Screen):
             "calibration_curve": False,  # last cal curve used
             # Dropdown population lists
             "printer_types": ("None", "3D Systems", "Aconity", "GE Additive", "Renishaw", "Stratasys"),
-            "calibration_curves": [v() for k, v in Calibration.__dict__.items() if "__" not in k],
+            "calibration_curves": [v() for k, v in Calibration.__dict__.items() if k[0] != "_"],
             "static_fileformats": ("png", "pdf", "ps", "eps", "svg"),  # Allowed static formats
-            "thresh_functions": [v() for k, v in ThresholdFunctions.__dict__.items() if "__" not in k],
+            "thresh_functions": [v() for k, v in ThresholdFunctions.__dict__.items() if k[0] != "_"],
             # Progress Bars
             "progress_bars": self.mtpy.progress_bars
         }
@@ -74,18 +74,18 @@ class Main(Screen):
         # The dropdown for selecting the printer type
         self.ids.printer_type_dropdown.populate_dropdown(self.cache.printer_types)
         # The dropdown for calibration curves
-        self.ids.calibration_curve_dropdown.populate_dropdown(self.cache.calibration_curves)
+        self.ids.calibration_curve_dropdown.populate_dropdown(self.cache.calibration_curves, default_selection=None)
         # The dropdowns for matplotlib filetype options
         static_filetype_dropdowns = (
             self.ids.layers_to_figures_filetype_dropdown,
             self.ids.layers_to_3dplot_filetype_dropdown,
             self.ids.samples_to_figures_filetype_dropdown,
-            self.ids.samples_to_3dplot_filetype_dropdown,
+            self.ids.samples_to_3dplots_filetype_dropdown,
         )
         for dropdown in static_filetype_dropdowns:
             dropdown.populate_dropdown(self.cache.static_fileformats)
         # The dropdowns for the thresholding functions
-        self.ids.avgtemp_thresh_function_dropdown.populate_dropdown(self.cache.thresh_functions)
+        self.ids.avgtemp_thresh_function_dropdown.populate_dropdown(self.cache.thresh_functions, default_selection=">")
 
     # Property returns a string summarising the status of data processing
     @property
@@ -212,6 +212,7 @@ class Main(Screen):
         else:
             if cal_curve_selection is not self.cache.calibration_curve:
                 self.mtpy.apply_calibration_curve(cal_curve_selection)
+                self.mtpy.wlabel = f"{cal_curve_selection.response} ({cal_curve_selection.units})"
                 self.cache.calibration_curve = cal_curve_selection
                 self.update_data_status()
 
@@ -303,22 +304,22 @@ class Main(Screen):
                                      scatterparams=scatterparams)
 
     # A wrapper function translating application state into a call to the
-    # mtpy function samples_to_3dplot
+    # mtpy function samples_to_3dplots
     @run_in_thread
-    def samples_to_3dplot(self):
+    def samples_to_3dplots(self):
         # get filetype and if not allowed replace with default (png)
-        filetype = self.ids.samples_to_3dplot_filetype_dropdown.text
+        filetype = self.ids.samples_to_3dplots_filetype_dropdown.text
         if filetype not in self.cache.static_fileformats:
             filetype = "png"
         # get checkbox parameters
-        plot_w = self.ids.samples_to_3dplot_plot_w.active
-        colorbar = self.ids.samples_to_3dplot_colorbar.active
+        plot_w = self.ids.samples_to_3dplots_plot_w.active
+        colorbar = self.ids.samples_to_3dplots_colorbar.active
         # then parse kwarg params
         figureparams = self.parse_kwargs(
-            self.ids.samples_to_3dplot_figureparams.text)
+            self.ids.samples_to_3dplots_figureparams.text)
         plotparams = self.parse_kwargs(
-            self.ids.samples_to_3dplot_plotparams.text)
-        self.mtpy.samples_to_3dplot(self.cache.out_path,
+            self.ids.samples_to_3dplots_plotparams.text)
+        self.mtpy.samples_to_3dplots(self.cache.out_path,
                                     filetype=filetype,
                                     plot_w=plot_w,
                                     colorbar=colorbar,
@@ -328,18 +329,18 @@ class Main(Screen):
     # A wrapper function translating application state into a call to the
     # mtpy function layers_to_3dplot_interactive
     @run_in_thread
-    def samples_to_3dplot_interactive(self):
+    def samples_to_3dplots_interactive(self):
         # get checkbox parameters
-        plot_w = self.ids.samples_to_3dplot_interactive_plot_w.active
-        sliceable = self.ids.samples_to_3dplot_interactive_sliceable.active
-        downsampling = self.ids.samples_to_3dplot_interactive_downsampling.text
+        plot_w = self.ids.samples_to_3dplots_interactive_plot_w.active
+        sliceable = self.ids.samples_to_3dplots_interactive_sliceable.active
+        downsampling = self.ids.samples_to_3dplots_interactive_downsampling.text
         if downsampling == "":
             downsampling = 1
         else:
             downsampling = int(downsampling)
         # then parse kwarg params
-        plotparams = self.parse_kwargs(self.ids.samples_to_3dplot_interactive_plotparams.text)  # noqa
-        self.mtpy.samples_to_3dplot_interactive(self.cache.out_path,
+        plotparams = self.parse_kwargs(self.ids.samples_to_3dplots_interactive_plotparams.text)  # noqa
+        self.mtpy.samples_to_3dplots_interactive(self.cache.out_path,
                                                 plot_w=plot_w,
                                                 sliceable=sliceable,
                                                 downsampling=downsampling,
@@ -367,10 +368,7 @@ class Main(Screen):
     # mtpy module to threshold all layers based on temperature
     @run_in_thread
     def avgtemp_threshold(self):
-        # get filetype and if not allowed replace with default (png)
-        thresh_function = self.ids.avgtemp_thresh_function_dropdown.text
-        if thresh_function not in self.cache.thresh_functions.keys():
-            thresh_function = ">"
+        # thresh_function = self.ids.avgtemp_thresh_function_dropdown.text
         # get threshold percentage
         thresh_percent = float(self.ids.avgtemp_thresh_thresh_percent.text)
         # Link to progress bar (at time of call since this bar is shared)
@@ -380,7 +378,7 @@ class Main(Screen):
             self.mtpy.avgw_threshold,
             {
                 "threshold_percent": thresh_percent,
-                "comparison_func": self.cache.thresh_functions[thresh_function]
+                "comparison_func": self.ids.avgtemp_thresh_function_dropdown.current_selection
             }
         )
 
@@ -407,7 +405,7 @@ class Main(Screen):
     # This function generates datasheets
     @run_in_thread
     def temp_data_to_csv(self):
-        confidence_interval = self.ids.temp_data_to_csv_confinterval
+        confidence_interval = str(self.ids.temp_data_to_csv_confinterval)
         confidence_interval = confidence_interval.strip()
         if confidence_interval.isdigit():
             confidence_interval = float(confidence_interval)

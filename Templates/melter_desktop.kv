@@ -672,7 +672,7 @@
                         size_hint_y: row_y_hint
                         # This button will be a dropdown
                         DropdownButton:
-                            id: samples_to_3dplot_filetype_dropdown
+                            id: samples_to_3dplots_filetype_dropdown
                             text: "select file type (png)"
                             size_hint_x: 0.25
                             size_hint_y: 0.5
@@ -682,7 +682,7 @@
                             size_hint_y: 0.5
                             # Checkboxes for toggling plot colouring and colourbars
                             CheckBox:
-                                id: samples_to_3dplot_plot_w
+                                id: samples_to_3dplots_plot_w
                                 active: True
                                 size_hint_x: 0.1
                                 size_hint_y: 0.5
@@ -694,7 +694,7 @@
                                 halign: "left"
                                 valign: "middle"
                             CheckBox:
-                                id: samples_to_3dplot_colorbar
+                                id: samples_to_3dplots_colorbar
                                 active: True
                                 size_hint_x: 0.1
                                 size_hint_y: 0.5
@@ -707,23 +707,23 @@
                                 valign: "middle"
                         # Text input for layer/sample filters
                         TextInput:
-                            id: samples_to_3dplot_layerfilter
+                            id: samples_to_3dplots_layerfilter
                             size_hint_x: 0.25
                             size_hint_y: 0.5
                             hint_text: "Layer filter..."
                         TextInput:
-                            id: samples_to_3dplot_samplefilter
+                            id: samples_to_3dplots_samplefilter
                             size_hint_x: 0.25
                             size_hint_y: 0.5
                             hint_text: "Sample filter..."
                         # And text input for other figure parameters
                         TextInput:
-                            id: samples_to_3dplot_figureparams
+                            id: samples_to_3dplots_figureparams
                             size_hint_x: 0.5
                             size_hint_y: 0.5
                             hint_text: "Figure parameters..."
                         TextInput:
-                            id: samples_to_3dplot_plotparams
+                            id: samples_to_3dplots_plotparams
                             size_hint_x: 0.5
                             size_hint_y: 0.5
                             hint_text: "Plot parameters..."
@@ -733,9 +733,9 @@
                         text: "Generate static 3d\nsample figures"
                         size_hint_x: 0.25
                         size_hint_y: row_y_hint
-                        on_press: root.samples_to_3dplot()
+                        on_press: root.samples_to_3dplots()
                     ProgressBar:
-                        id: samples_to_3dplot_progbar
+                        id: samples_to_3dplots_progbar
                         size_hint_x: 0.75
                         size_hint_y: row_y_hint
                         value: 0
@@ -761,22 +761,22 @@
                             halign: "right"
                             valign: "middle"
                         TextInput:
-                            id: samples_to_3dplot_interactive_downsampling
+                            id: samples_to_3dplots_interactive_downsampling
                             hint_text: "1"
                             size_hint_x: 0.083
                             size_hint_y: 0.5
                         TextInput:
-                            id: samples_to_3dplot_interactive_layerfilter
+                            id: samples_to_3dplots_interactive_layerfilter
                             size_hint_x: 0.375
                             size_hint_y: 0.5
                             hint_text: "Layer Filter..."
                         TextInput:
-                            id: samples_to_3dplot_interactive_samplefilter
+                            id: samples_to_3dplots_interactive_samplefilter
                             size_hint_x: 0.375
                             size_hint_y: 0.5
                             hint_text: "Sample Filter..."
                         CheckBox:
-                            id: samples_to_3dplot_interactive_plot_w
+                            id: samples_to_3dplots_interactive_plot_w
                             active: True
                             size_hint_x: 0.025
                             size_hint_y: 0.5
@@ -788,7 +788,7 @@
                             halign: "left"
                             valign: "middle"
                         CheckBox:
-                            id: samples_to_3dplot_interactive_sliceable
+                            id: samples_to_3dplots_interactive_sliceable
                             active: True
                             size_hint_x: 0.025
                             size_hint_y: 0.5
@@ -800,7 +800,7 @@
                             halign: "left"
                             valign: "middle"
                         TextInput:
-                            id: samples_to_3dplot_interactive_plotparams
+                            id: samples_to_3dplots_interactive_plotparams
                             size_hint_x: 0.75
                             size_hint_y: 0.5
                             hint_text: "Plot parameters..."
@@ -810,9 +810,9 @@
                         text: "Generate interactive 3d\nsample figures"
                         size_hint_x: 0.25
                         size_hint_y: row_y_hint
-                        on_press: root.samples_to_3dplot_interactive()
+                        on_press: root.samples_to_3dplots_interactive()
                     ProgressBar:
-                        id: samples_to_3dplot_interactive_progbar
+                        id: samples_to_3dplots_interactive_progbar
                         size_hint_x: 0.75
                         size_hint_y: row_y_hint
                         value: 0

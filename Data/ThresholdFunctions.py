@@ -1,4 +1,4 @@
-import operator as __op
+import operator as _op
 
 
 class __Base():
@@ -16,7 +16,7 @@ class Greater(__Base):
         self.name = ">"
 
     def __call__(self, *args):
-        return __op.gt(*args)
+        return _op.gt(*args)
 
 
 class GreaterOrEqual(__Base):
@@ -25,7 +25,7 @@ class GreaterOrEqual(__Base):
         self.name = "≥"
 
     def __call__(self, *args):
-        return __op.ge(*args)
+        return _op.ge(*args)
 
 
 class Equal(__Base):
@@ -34,7 +34,7 @@ class Equal(__Base):
         self.name = "="
 
     def __call__(self, *args):
-        return __op.eq(*args)
+        return _op.eq(*args)
 
 
 class NotEqual(__Base):
@@ -43,7 +43,7 @@ class NotEqual(__Base):
         self.name = "≠"
 
     def __call__(self, *args):
-        return __op.ne(*args)
+        return _op.ne(*args)
 
 
 class LessOrEqual(__Base):
@@ -52,7 +52,7 @@ class LessOrEqual(__Base):
         self.name = "≤"
 
     def __call__(self, *args):
-        return __op.le(*args)
+        return _op.le(*args)
 
 
 class Less(__Base):
@@ -61,4 +61,4 @@ class Less(__Base):
         self.name = "<"
 
     def __call__(self, *args):
-        return __op.lt(*args)
+        return _op.lt(*args)

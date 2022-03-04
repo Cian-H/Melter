@@ -10,7 +10,7 @@ class DropdownButton(Button):
 
     def __init__(self,
                  option_list=None,
-                 default_selection=None,
+                 default_selection="None",
                  bound_textfields={},
                  **kwargs):
         # ensure "test" kwarg isnt present
@@ -34,15 +34,10 @@ class DropdownButton(Button):
         super(DropdownButton, self).__init__(**self.kwargs)
 
         if option_list is not None:
-            self.populate_dropdown(option_list)
-
-        if type(default_selection) == str:
-            self.current_selection = self.objects_dict[default_selection]
-        else:
-            self.current_selection = default_selection
+            self.populate_dropdown(option_list, default_selection)
 
     # Populates dropdown with contents of list given
-    def populate_dropdown(self, option_list):
+    def populate_dropdown(self, option_list, default_selection=None):
         kwargs = self.kwargs.copy()
         kwargs["size_hint_y"] = None
         if "height" not in kwargs:
@@ -55,13 +50,16 @@ class DropdownButton(Button):
 
         self.objects_dict = {str(x): x for x in option_list}
 
-        for x in self.objects_dict.keys():
+        for x in self.objects_dict:
             button = Button(text=x, **kwargs)
             button.bind(on_release=self._bind_button)
             self.dropdown_list.add_widget(button)
 
         self.bind(on_release=self.dropdown_list.open)
         self.dropdown_list.bind(on_select=self._select_item)
+
+        if default_selection is not None:
+            self._select_item(self, default_selection)
 
     # Function to bind button to dropdown
     def _bind_button(self, btn):
